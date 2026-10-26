@@ -51,13 +51,15 @@
 
     <div class="card">
       <h2>Site details <span class="opt">optional</span></h2>
-      <label class="field"><span>Site name</span><input id="fName" type="text" maxlength="80" placeholder="e.g. Corner bungalow, 5th Street"></label>
+      <label class="field"><span>Site name</span><input id="fName" type="text" maxlength="80" placeholder="Building name if you know it, e.g. Powell Library"></label>
       <label class="field"><span>What you already know</span><textarea id="fContext" rows="2" maxlength="600" placeholder="Address, year built, permit notes, owner comments. The model treats this as unverified."></textarea></label>
       <div class="row">
         <label class="field grow"><span>Analysis depth</span>
           <select id="fDepth"><option value="quick">Quick (fast)</option><option value="standard" selected>Standard</option><option value="detailed">Detailed (slower)</option></select></label>
         <label class="switch"><input type="checkbox" id="fGps"><span class="knob"></span><span class="lbl">Tag GPS</span></label>
       </div>
+      <label class="switch"><input type="checkbox" id="fLookup" checked><span class="knob"></span><span class="lbl">Identify landmark and pull its history (web search)</span></label>
+      <p class="hint">A building name and GPS make landmark identification far more reliable.</p>
       <p class="hint" id="gpsStatus" hidden></p>
     </div>
 
@@ -130,13 +132,14 @@
       <label class="field"><span>Photo size sent to Gemini</span>
         <select id="sSize"><option value="1280">Smaller (1280 px)</option><option value="1600" selected>Balanced (1600 px)</option><option value="2048">Sharper (2048 px)</option></select></label>
       <label class="switch"><input type="checkbox" id="sGpsDefault"><span class="knob"></span><span class="lbl">Tag GPS by default</span></label>
+      <label class="switch"><input type="checkbox" id="sLookup" checked><span class="knob"></span><span class="lbl">Look up landmark history by default</span></label>
     </div>
 
     <div class="card">
       <h2>Privacy and storage</h2>
       <ul class="plain">
         <li>Photos and results are stored only on this device, in the browser database.</li>
-        <li>Photos are sent to Google's Gemini API only when you tap Analyze. No other server is involved, and the app has no analytics or third-party code.</li>
+        <li>Photos are sent to Google's Gemini API only when you tap Analyze (landmark lookup uses Gemini with Google Search). No other server is involved, and the app has no analytics or third-party code.</li>
         <li>Free-tier Gemini keys may allow Google to use submitted content to improve products. Use a paid or billing-enabled key if the photos are sensitive.</li>
         <li>Restrict your key in Google AI Studio or Cloud Console, and delete it there if a phone is lost.</li>
       </ul>
@@ -148,7 +151,7 @@
       <p class="hint" id="installHint">Open this page in Chrome on Android, then use the browser menu and choose Install app (or Add to Home screen). iPhone: Share, then Add to Home Screen.</p>
       <div class="row wrap"><button class="btn small" id="btnShare">Share this app link</button></div>
     </div>
-    <p class="fine center">Facade Field Survey 1.0</p>
+    <p class="fine center">Facade Field Survey 1.1</p>
   </section>
 </main>
 
@@ -177,6 +180,7 @@
 <div id="sheet" class="sheet" hidden><div class="sheet-card"><button class="sheet-close" id="sheetClose" aria-label="Close">Close</button><div id="sheetBody"></div></div></div>
 
 <script src="data/styles.js"></script>
+<script src="data/supplement.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

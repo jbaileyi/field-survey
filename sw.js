@@ -1,7 +1,7 @@
 'use strict';
 // Caches the app shell so the app opens offline. Never touches API traffic.
-const CACHE = 'field-survey-v1';
-const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'data/styles.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
+const CACHE = 'field-survey-v2';
+const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'data/styles.js', 'data/supplement.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
