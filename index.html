@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#b5532f">
+<meta name="color-scheme" content="light dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Field Survey">
+<title>Facade Field Survey</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="appbar">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path d="M5 29V15a11 11 0 0 1 22 0v14z" fill="currentColor" opacity=".18"/><path d="M9 29V16a7 7 0 0 1 14 0v13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M3 29h26" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    <h1 id="screenTitle">Field Survey</h1>
+  </div>
+  <button class="icon-btn" id="installBtn" hidden>Install</button>
+</header>
+
+<main id="main" tabindex="-1">
+
+  <!-- SURVEY -->
+  <section id="view-survey" class="view">
+    <div class="banner" id="keyBanner" hidden>
+      <strong>Add your Gemini API key to begin.</strong>
+      <span>It stays on this device and is sent only to Google.</span>
+      <button class="btn small" data-goto="settings">Open settings</button>
+    </div>
+
+    <div class="capture-row">
+      <button class="btn primary big" id="btnCamera"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 8h3l1.6-2.2h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13.2" r="3.6" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>Take photos</button>
+      <button class="btn big" id="btnUpload"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 16V5m0 0-4 4m4-4 4 4M5 15v4h14v-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Upload</button>
+    </div>
+    <input type="file" id="fileUpload" accept="image/*" multiple hidden>
+    <input type="file" id="fileNative" accept="image/*" capture="environment" hidden>
+
+    <div class="card" id="stageCard">
+      <div class="card-head"><h2>Photos <span class="count" id="stageCount">0 / 6</span></h2>
+        <button class="link" id="btnClearStage" hidden>Clear</button></div>
+      <div class="stage" id="stage"></div>
+      <p class="hint" id="stageHint">Take a straight-on facade shot first. Then add a roofline, an entry or window detail, and a corner for the best results. Up to six photos per survey.</p>
+    </div>
+
+    <div class="card">
+      <h2>Site details <span class="opt">optional</span></h2>
+      <label class="field"><span>Site name</span><input id="fName" type="text" maxlength="80" placeholder="e.g. Corner bungalow, 5th Street"></label>
+      <label class="field"><span>What you already know</span><textarea id="fContext" rows="2" maxlength="600" placeholder="Address, year built, permit notes, owner comments. The model treats this as unverified."></textarea></label>
+      <div class="row">
+        <label class="field grow"><span>Analysis depth</span>
+          <select id="fDepth"><option value="quick">Quick (fast)</option><option value="standard" selected>Standard</option><option value="detailed">Detailed (slower)</option></select></label>
+        <label class="switch"><input type="checkbox" id="fGps"><span class="knob"></span><span class="lbl">Tag GPS</span></label>
+      </div>
+      <p class="hint" id="gpsStatus" hidden></p>
+    </div>
+
+    <button class="btn primary wide" id="btnAnalyze" disabled>Analyze structure</button>
+    <p class="fine">AI-assisted observations from photographs only. This is not a structural, seismic or legal historic-resource determination.</p>
+  </section>
+
+  <!-- RESULT -->
+  <section id="view-result" class="view" hidden></section>
+
+  <!-- HISTORY -->
+  <section id="view-history" class="view" hidden>
+    <div id="insights"></div>
+    <div class="toolbar">
+      <input id="histSearch" type="search" placeholder="Search name, style, notes" aria-label="Search surveys">
+      <button class="btn small" id="btnSelect">Select</button>
+    </div>
+    <div class="chips" id="histChips"></div>
+    <div id="histList" class="hist-list"></div>
+    <div class="selectbar" id="selectBar" hidden>
+      <span id="selCount">0 selected</span>
+      <button class="btn small" id="selAll">All</button>
+      <button class="btn small danger" id="selDelete">Delete</button>
+      <button class="btn small" id="selCancel">Done</button>
+    </div>
+    <div class="row wrap tools">
+      <button class="btn small" id="btnBackup">Export backup</button>
+      <button class="btn small" id="btnRestore">Import backup</button>
+      <button class="btn small danger" id="btnDeleteAll">Delete all</button>
+      <input type="file" id="fileRestore" accept="application/json,.json" hidden>
+    </div>
+  </section>
+
+  <!-- STYLE GUIDE -->
+  <section id="view-guide" class="view" hidden>
+    <div class="toolbar"><input id="guideSearch" type="search" placeholder="Search styles, architects, places" aria-label="Search style guide"></div>
+    <p class="fine" id="guideCount"></p>
+    <div id="guideList" class="guide-list"></div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="view-settings" class="view" hidden>
+    <div class="card">
+      <h2>Gemini API key</h2>
+      <p class="hint">Each person uses their own free or paid key from <strong>aistudio.google.com/apikey</strong>. Nothing is baked into the app, so there is no shared key to steal or run up charges on.</p>
+      <label class="field"><span>API key</span>
+        <div class="keyrow"><input id="sKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="AIza..."><button class="btn small" id="btnShowKey" type="button">Show</button></div></label>
+      <label class="switch"><input type="checkbox" id="sRemember" checked><span class="knob"></span><span class="lbl">Remember key on this device</span></label>
+      <p class="hint">Off means the key is kept for this session only and is forgotten when the app closes.</p>
+      <div class="row wrap">
+        <button class="btn primary small" id="btnSaveKey">Save and test</button>
+        <button class="btn small danger" id="btnRemoveKey">Remove key</button>
+      </div>
+      <p class="status" id="keyStatus" role="status"></p>
+    </div>
+
+    <div class="card">
+      <h2>Model</h2>
+      <label class="field"><span>Gemini model</span><select id="sModel"></select></label>
+      <label class="field"><span>Or enter a model ID</span><input id="sModelCustom" type="text" placeholder="e.g. gemini-3.8-flash" autocapitalize="off" spellcheck="false"></label>
+      <div class="row wrap"><button class="btn small" id="btnModels">Load models available to my key</button></div>
+      <p class="hint">Model names change often. The loader asks Google which image-capable models your key can use, so you are never stuck on a retired name.</p>
+      <p class="status" id="modelStatus" role="status"></p>
+    </div>
+
+    <div class="card">
+      <h2>Preferences</h2>
+      <label class="switch"><input type="checkbox" id="sAutoCam"><span class="knob"></span><span class="lbl">Open camera when the app starts</span></label>
+      <label class="switch"><input type="checkbox" id="sGrid" checked><span class="knob"></span><span class="lbl">Show composition grid in camera</span></label>
+      <label class="field"><span>Photo size sent to Gemini</span>
+        <select id="sSize"><option value="1280">Smaller (1280 px)</option><option value="1600" selected>Balanced (1600 px)</option><option value="2048">Sharper (2048 px)</option></select></label>
+      <label class="switch"><input type="checkbox" id="sGpsDefault"><span class="knob"></span><span class="lbl">Tag GPS by default</span></label>
+    </div>
+
+    <div class="card">
+      <h2>Privacy and storage</h2>
+      <ul class="plain">
+        <li>Photos and results are stored only on this device, in the browser database.</li>
+        <li>Photos are sent to Google's Gemini API only when you tap Analyze. No other server is involved, and the app has no analytics or third-party code.</li>
+        <li>Free-tier Gemini keys may allow Google to use submitted content to improve products. Use a paid or billing-enabled key if the photos are sensitive.</li>
+        <li>Restrict your key in Google AI Studio or Cloud Console, and delete it there if a phone is lost.</li>
+      </ul>
+      <p class="status" id="storageStatus"></p>
+    </div>
+
+    <div class="card" id="installCard">
+      <h2>Install and share</h2>
+      <p class="hint" id="installHint">Open this page in Chrome on Android, then use the browser menu and choose Install app (or Add to Home screen). iPhone: Share, then Add to Home Screen.</p>
+      <div class="row wrap"><button class="btn small" id="btnShare">Share this app link</button></div>
+    </div>
+    <p class="fine center">Facade Field Survey 1.0</p>
+  </section>
+</main>
+
+<nav class="tabbar" aria-label="Main">
+  <button data-tab="survey" class="active"><svg viewBox="0 0 24 24"><path d="M4 8h3l1.6-2.2h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.2" r="3.6"/></svg><span>Survey</span></button>
+  <button data-tab="history"><svg viewBox="0 0 24 24"><path d="M5 5h14v14H5zM5 10h14M10 10v9"/></svg><span>History</span></button>
+  <button data-tab="guide"><svg viewBox="0 0 24 24"><path d="M5 4h10a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h10"/></svg><span>Styles</span></button>
+  <button data-tab="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg><span>Settings</span></button>
+</nav>
+
+<!-- Camera overlay -->
+<div id="camera" class="camera" hidden>
+  <video id="camVideo" playsinline muted autoplay></video>
+  <div class="grid" id="camGrid"></div>
+  <div class="cam-top"><button class="pill" id="camClose">Close</button><span class="pill" id="camCount">0 / 6</span><button class="pill" id="camFlip">Flip</button></div>
+  <p class="cam-tip" id="camTip">Stand square to the facade and keep vertical lines upright.</p>
+  <div class="cam-bottom">
+    <button class="pill" id="camNative">System camera</button>
+    <button class="shutter" id="camShutter" aria-label="Take photo"></button>
+    <button class="pill accent" id="camDone">Done</button>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<div id="busy" class="busy" hidden><div class="busy-card"><div class="spinner"></div><p id="busyText">Analyzing</p><button class="btn small" id="busyCancel">Cancel</button></div></div>
+<div id="sheet" class="sheet" hidden><div class="sheet-card"><button class="sheet-close" id="sheetClose" aria-label="Close">Close</button><div id="sheetBody"></div></div></div>
+
+<script src="data/styles.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

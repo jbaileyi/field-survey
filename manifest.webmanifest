@@ -1,0 +1,17 @@
+{
+  "name": "Facade Field Survey",
+  "short_name": "Field Survey",
+  "description": "Photograph a building and get an AI-assisted architectural style survey with a California style reference.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5eee2",
+  "theme_color": "#b5532f",
+  "categories": ["productivity", "education"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
