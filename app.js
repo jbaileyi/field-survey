@@ -34,9 +34,9 @@
   const fmtDate = (t) => new Date(t).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
   const firstSentence = (s) => str(s).split('. ')[0].replace(/\.$/, '');
   let toastTimer;
-  function toast(msg) {
+  function toast(msg, ms) {
     const t = $('#toast'); t.textContent = msg; t.hidden = false;
-    clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.hidden = true), 3200);
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.hidden = true), ms || 3200);
   }
   const blobToDataURL = (b) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsDataURL(b); });
   const dataURLToBlob = (u) => {
@@ -257,7 +257,7 @@ Condition notes are visual observations to be verified by qualified professional
     if (status === 404) return userError(`Model "${model}" was not found for your key. Open Settings and tap "Load models available to my key".`, 'settings', { ...x, retryable: true });
     if (status === 429) return userError('Rate limit or quota reached. Wait a minute, use Quick depth, or check your plan in Google AI Studio. ' + m, null, x);
     if (status === 413) return userError('The photos are too large. Use fewer photos or a smaller photo size in Settings.', null, x);
-    if (status >= 500) return userError(`Google server error ${status} from ${model}: ${m || 'no details'}. Try another model in Settings.`, null, { ...x, retryable: true });
+    if (status >= 500) return userError(`Google had a problem (${status}) with ${model}: ${m || 'no details'}. Tried other models and fewer photos. Try again shortly, or pick another model in Settings.`, null, { ...x, retryable: true });
     return userError(`Request failed (${status}). ${m}`, null, x);
   }
   async function gen(model, parts, o) {
@@ -338,12 +338,13 @@ Condition notes are visual observations to be verified by qualified professional
     ? `LANDMARK RECORD (identified via web search, confidence ${lm.confidence}%; verify against the photos):\n${JSON.stringify({ name: lm.name, location: lm.location, architects: lm.architects, year_built: lm.year_built, documented_style: lm.documented_style, influences: lm.influences, summary: lm.summary, key_facts: lm.key_facts, designations: lm.designations })}`
     : 'LANDMARK RECORD: none. A lookup did not confirm a specific documented building, so classify from visible evidence alone.';
 
-  async function runPipeline(rec, signal, progress) {
+  async function runPipeline(rec, signal, progress, cap) {
+    cap = cap || MAX_PHOTOS;
     let landmark = null, sources = [], notice = '';
     if (rec.lookup) {
       progress('Checking whether this is a known landmark');
       try {
-        const parts = [{ text: `Identify the building in these photos and gather its documented history.\n${siteContext(rec) || 'No extra context was given.'}\n\nSteps: (1) Decide whether this is a specific, documented building (campus building, civic landmark, church, theater, etc.). Use distinctive form, signage, inscriptions, the GPS position and the user's context; a GPS fix near a known building is strong evidence but the photos must also fit. (2) If so, use Google Search to confirm and collect official name, architect(s), completion years, documented style(s) and influences, notable features, history and designations. (3) If you cannot confirm, set is_known_landmark to false and say what is missing.\n\nReturn ONLY a JSON object in this shape:\n${SHAPE_L}` }, ...(await imageParts(rec.images, 3))];
+        const parts = [{ text: `Identify the building in these photos and gather its documented history.\n${siteContext(rec) || 'No extra context was given.'}\n\nSteps: (1) Decide whether this is a specific, documented building (campus building, civic landmark, church, theater, etc.). Use distinctive form, signage, inscriptions, the GPS position and the user's context; a GPS fix near a known building is strong evidence but the photos must also fit. (2) If so, use Google Search to confirm and collect official name, architect(s), completion years, documented style(s) and influences, notable features, history and designations. (3) If you cannot confirm, set is_known_landmark to false and say what is missing.\n\nReturn ONLY a JSON object in this shape:\n${SHAPE_L}` }, ...(await imageParts(rec.images, Math.min(3, cap)))];
         const data = await gen(rec.model, parts, { system: SYSTEM_L, tools: [{ googleSearch: {} }], json: false, maxTokens: 4096, retries: 1, signal });
         const c = readCandidate(data); sources = c.sources;
         const j = c.text ? parseJson(c.text) : null; landmark = normLandmark(j);
@@ -354,8 +355,8 @@ Condition notes are visual observations to be verified by qualified professional
       }
     }
     progress(rec.depth === 'quick' ? 'Analyzing the photos' : 'Analyzing style and condition');
-    const imgs = await imageParts(rec.images, MAX_PHOTOS), lmText = landmarkBlock(landmark), ctx = siteContext(rec);
-    const n = rec.images.length;
+    const imgs = await imageParts(rec.images, cap), lmText = landmarkBlock(landmark), ctx = siteContext(rec);
+    const n = Math.min(rec.images.length, cap);
     const introA = (shape, depth) => ({ text: `Analyze the structure shown in the ${n} attached photo(s).\n${ctx}\n\n${lmText}\n\n${depth}\n\nREFERENCE LIST (id, name, features, period, architects). Not exhaustive:\n${refText()}\n\nReturn JSON in exactly this shape (replace placeholder values; arrays may be empty):\n${shape}` });
     const introB = (depth) => ({ text: `Assess the condition and context of the structure shown in the ${n} attached photo(s).\n${ctx}\n\n${lmText}\n\n${depth}\n\nReturn JSON in exactly this shape (replace placeholder values; arrays may be empty):\n${SHAPE_B}` });
     let A, B = {}, truncated = false;
@@ -396,8 +397,8 @@ Condition notes are visual observations to be verified by qualified professional
 
   /* ---------- analyze flow ---------- */
   function setBusy(on, text) { $('#busy').hidden = !on; if (text) $('#busyText').textContent = text; }
-  function pickFallback(cur) {
-    const list = (settings.models || []).filter((m) => m !== cur && !/tts|live|embed|audio/i.test(m));
+  function pickFallback(cur, tried) {
+    const list = (settings.models || []).filter((m) => m !== cur && !(tried && tried.has(m)) && !/tts|live|embed|audio/i.test(m));
     return list.find((m) => /flash/.test(m) && !/lite|preview/.test(m)) || list.find((m) => /flash/.test(m)) || list[0] || null;
   }
   async function runAnalysis(rec, isRerun) {
@@ -406,16 +407,22 @@ Condition notes are visual observations to be verified by qualified professional
     const timer = setTimeout(() => state.abort.abort(), 300000);
     setBusy(true, 'Starting');
     const progress = (t) => setBusy(true, `${t} (${rec.model})`);
-    let triedFallback = false;
+    const tried = new Set([rec.model]); let cap = MAX_PHOTOS, shrunk = false;
     try {
       let out;
       for (;;) {
-        try { out = await runPipeline(rec, state.abort.signal, progress); break; }
+        try { out = await runPipeline(rec, state.abort.signal, progress, cap); break; }
         catch (e) {
-          if (e.retryable && !triedFallback) { const fb = pickFallback(rec.model); if (fb) { triedFallback = true; toast(`${rec.model} is failing. Trying ${fb}.`); rec.model = fb; continue; } }
+          const server = e.retryable || (e.status >= 500);
+          if (server && !shrunk && rec.images.length > 3) { shrunk = true; cap = 3; toast('Google had trouble with the full request. Retrying with 3 photos.'); continue; }
+          if (server && tried.size < 4) {
+            const fb = pickFallback(rec.model, tried);
+            if (fb) { toast(`${rec.model} is failing. Trying ${fb}.`, 4500); tried.add(fb); rec.model = fb; continue; }
+          }
           throw e;
         }
       }
+      if (rec.model !== settings.model && tried.size > 1) { settings.model = rec.model; saveSettings(); toast('Switched default model to ' + rec.model + ' because the previous one was failing.', 5000); }
       rec.result = out.result; rec.updatedAt = Date.now(); rec.truncated = !!out.truncated;
       if (!rec.title) rec.title = (out.result.landmark && out.result.landmark.is_known_landmark && out.result.landmark.confidence >= 60 && out.result.landmark.name) || str(out.result.subject.title) || out.result.primary_style.name;
       await DB.put(rec);
@@ -424,8 +431,8 @@ Condition notes are visual observations to be verified by qualified professional
       else { resetSurveyForm(); openResult(rec, true); }
     } catch (e) {
       if (e.cancelled) toast('Analysis cancelled.');
-      else if (e.user) { toast(e.message); if (e.goto === 'settings') showTab('settings'); }
-      else { console.error(e); toast('Unexpected error: ' + (e.message || e)); }
+      else if (e.user) { toast(e.message, 9000); if (e.goto === 'settings') showTab('settings'); }
+      else { console.error(e); toast('Unexpected error: ' + (e.message || e), 9000); }
     } finally { clearTimeout(timer); setBusy(false); state.abort = null; }
   }
   function resetSurveyForm() {
