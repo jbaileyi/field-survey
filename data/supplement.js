@@ -14,18 +14,18 @@ window.REFERENCE_STYLES = (window.REFERENCE_STYLES || []).concat([
   "id": "neoclassical-revival",
   "supplement": true,
   "name": "Neoclassical / Classical Revival",
-  "features": "Symmetrical facades, colossal columns or pilasters with capitals, pediments, full entablatures, stone or smooth masonry surfaces, and balanced, restrained ornament.",
-  "history": "Popular from the late 19th century through the 1930s for banks, courthouses, libraries and civic buildings. Related to, but plainer than, Beaux-Arts, which adds sculpture, domes and heavier ornament.",
+  "features": "Strict symmetry; a classical order (columns or pilasters with Ionic, Corinthian or Doric capitals); a full entablature with dentil or modillion cornice; pediments over entrances or windows; smooth ashlar stone, terra-cotta or light brick walls; balustrades at the roofline; plain, restrained wall surfaces compared with Beaux-Arts.",
+  "history": "Popular from the late 19th century through the 1930s for banks, courthouses, libraries and civic buildings. Plainer than Beaux-Arts, which adds sculpture, domes and heavier ornament.",
   "where": "Civic buildings, banks and libraries of the early 20th century across California; verify local examples.",
   "architects": []
  },
  {
   "id": "italian-renaissance-revival",
   "supplement": true,
-  "name": "Italian Renaissance Revival (Palazzo style)",
-  "features": "Rusticated ground floor, round-arched windows or arcades, strong horizontal string courses, a heavy projecting cornice with brackets, and low-pitched hipped roofs, often with clay tile.",
-  "history": "Drew on Florentine and Roman palazzi for banks, clubs, hotels and large houses, mainly 1890 to 1930. Distinct from Mission and Spanish revivals by its masonry-like, classically ordered facade.",
-  "where": "Downtown commercial districts and wealthy residential areas; verify local examples.",
+  "name": "Italian Renaissance Revival (Palazzo style) and Italianate commercial",
+  "features": "Palazzo-like massing with a base, middle and crowning cornice; rusticated or banded ground floor and quoins at the corners; round-arched or pedimented windows, often with different heads on each floor; horizontal string courses and belt courses; a heavy projecting cornice with brackets, dentils or modillions; brick, terra-cotta or stone walls with contrasting stone or terra-cotta trim; wrought-iron balconies, window grilles, railings and lanterns; balustrades at the roof; low-pitched hipped roofs, sometimes clay tile; classical doorway surrounds with keystones.",
+  "history": "Drew on Florentine and Roman palazzi for banks, clubs, hotels, offices and large houses, mainly 1890 to 1930. Distinct from Spanish and Mediterranean revivals (stucco, tile roofs, arcaded loggias) and from Beaux-Arts (sculpture, domes, colossal orders). A brick building with dentil moldings, wrought iron and arched windows belongs here, not in a generic commercial category.",
+  "where": "Downtown commercial districts, banks, lodges and wealthy residential areas; verify local examples.",
   "architects": []
  }
 ]);
