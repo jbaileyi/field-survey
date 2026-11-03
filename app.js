@@ -229,7 +229,7 @@
     detailed: 'Cover every visible issue, give substantive seismic, fire and regulatory notes (up to 5 each), up to 6 similar examples and up to 8 field checks.',
   };
   let refTextCache;
-  const refText = () => refTextCache || (refTextCache = REF.map((r) => `[${r.id}]${r.supplement ? ' (app supplement)' : ''} ${r.name}${r.family ? ' | Family: ' + r.family : ''} | Features: ${r.features} | Period: ${firstSentence(r.history)} | Architects: ${arr(r.architects).join('; ') || 'n/a'}`).join('\n'));
+  const refText = () => refTextCache || (refTextCache = REF.map((r) => `[${r.id}]${r.supplement ? ' (app supplement)' : ''} ${r.name}${r.family ? ' | Family: ' + r.family : ''}${r.generic ? ' | GENERIC building-type category (last resort)' : ''} | Features: ${r.features} | Period: ${firstSentence(r.history)} | Architects: ${arr(r.architects).join('; ') || 'n/a'}`).join('\n'));
 
   const RULES = `Ground every statement in what is visible or in a provided landmark record. If something cannot be seen, mark it not_visible or omit it. Never invent details. Calibrate confidence honestly (0-100). User-supplied context is unverified; say when photos contradict it. Respond with a single JSON object only, no markdown, matching the requested shape exactly.`;
   const SYSTEM_A = `You are an expert architectural historian and field surveyor specializing in California buildings and historic-resource recording.
@@ -243,7 +243,9 @@ How to classify:
 6. Architect attribution from photos alone is unreliable. Without a landmark record, label candidates "reference_list" or "inferred" and keep certainty "low" unless a distinctive signature is plain. The reference list may contain imperfect attributions; flag doubt.
 7. Some entries share a Family: they are variants of one style family (for example residential versus civic or commercial versions). Choose the variant that fits the building type and era, use its exact name and id, and do not list sibling variants as alternate_styles.
 8. Architects in the reference list are figures associated with the style in general. Many worked outside California or in other periods, so a listed name is not evidence that they designed this building. Offer one only as a low-certainty candidate with source "reference_list", check that the person was active in the estimated era, and prefer an empty list to a weak guess.
-9. Each entry's Period is when the style flourished. If the estimated era falls clearly outside it, the building may be a later revival or reinterpretation: say so, and lower reference_fit unless the features are unmistakable.`;
+10. Entries marked GENERIC are plain building-type categories, not styles. Use one only when the building has no distinctive style signature at all. Style-defining ornament and massing always outrank building type or wall material: a brick or stone downtown building with zigzag or chevron ornament, vertical piers, setbacks or terra-cotta relief panels is Art Deco; round-arched masonry with heavy rusticated stone or banded courses is Romanesque; a classical order with cornice and pilasters is a Renaissance or Neoclassical Revival. Never reach for a GENERIC entry just because the building is commercial, urban or made of brick.
+11. If your style_free_name is a recognized style that is missing from the list, keep that name with reference_fit "none" instead of remapping it to the nearest entry. A famous or unusual building (an iron-and-glass atrium, a landmark with its own documented style) should keep its documented style.
+12. Each entry's Period is when the style flourished. If the estimated era falls clearly outside it, the building may be a later revival or reinterpretation: say so, and lower reference_fit unless the features are unmistakable.`;
   const SYSTEM_B = `You are a historic-resource field surveyor and building-conditions observer for California buildings.
 ${RULES}
 Condition notes are visual observations to be verified by qualified professionals; never issue structural safety verdicts or legal determinations. California considerations may cover seismic vulnerability patterns (unreinforced masonry, soft-story, unbraced chimneys, parapets, cripple walls, tower or dome connections), wildfire and climate exposure, and regulatory context such as the California Register of Historical Resources and CEQA historic review, framed as things to check. Use the landmark record, when provided, for significance and designations.`;
@@ -396,6 +398,13 @@ Condition notes are visual observations to be verified by qualified professional
       california_considerations: { seismic: arr(o.california_considerations && o.california_considerations.seismic), fire_and_climate: arr(o.california_considerations && o.california_considerations.fire_and_climate), regulatory: arr(o.california_considerations && o.california_considerations.regulatory) },
       significance: o.significance || {}, similar_examples: arr(o.similar_examples), field_checks: arr(o.field_checks), caveats: arr(o.caveats),
     };
+    const gref = REF_BY_ID[res.primary_style.reference_id];
+    if (gref && gref.generic) {
+      const p = res.primary_style;
+      if (p.reference_fit === 'strong') p.reference_fit = 'partial';
+      p.confidence = Math.min(p.confidence, 70);
+      res.caveats.push('The closest reference entry is a generic building-type category, not a named style. Check the alternates and the features for a more specific style.');
+    }
     // Cross-check: a confident match should be backed by the style's own canonical features.
     const items = res.reference_checklist.filter((c) => c && ['present', 'partial', 'absent'].includes(c.status));
     if (items.length >= 4) {

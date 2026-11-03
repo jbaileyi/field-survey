@@ -115,8 +115,7 @@ window.REFERENCE_STYLES = [
   "where": "Historic neighborhoods like Downtown Los Angeles (Historic Core), Koreatown/Wilshire Center, Miracle Mile/Mid-Wilshire.",
   "architects": [
    "William Van Alen",
-   "Shreve",
-   "Lamb & Harmon",
+   "Shreve, Lamb & Harmon",
    "Raymond Hood",
    "Albert Kahn",
    "Timothy Pflueger",
@@ -492,7 +491,8 @@ window.REFERENCE_STYLES = [
    "Jeanne Gang",
    "David Chipperfield",
    "Marcy Wong Donn Logan Architects"
-  ]
+  ],
+  "generic": true
  },
  {
   "id": "mining-town-western-false-front",
@@ -502,7 +502,8 @@ window.REFERENCE_STYLES = [
   "where": "Historic main streets in Old Sacramento State Historic Park, Columbia State Historic Park, and historic Highway 49 towns.",
   "architects": [
    "Vernacular"
-  ]
+  ],
+  "generic": true
  },
  {
   "id": "pwa-moderne",
@@ -530,8 +531,7 @@ window.REFERENCE_STYLES = [
   "architects": [
    "Henry Hobson Richardson",
    "William Ralph Emerson",
-   "McKim",
-   "Mead & White",
+   "McKim, Mead & White",
    "Peabody & Stearns",
    "Bruce Price",
    "John Calvin Stevens"
@@ -546,8 +546,7 @@ window.REFERENCE_STYLES = [
   "architects": [
    "Gordon Bunshaft",
    "Ludwig Mies van der Rohe",
-   "Skidmore",
-   "Owings & Merrill",
+   "Skidmore, Owings & Merrill",
    "Eero Saarinen",
    "Philip Johnson",
    "Minoru Yamasaki",
@@ -679,9 +678,7 @@ window.REFERENCE_STYLES = [
    "Lucien Plympton",
    "Myron Hunt",
    "Elmer Grey",
-   "Mills",
-   "Rhines",
-   "Bellman and Nordhoff",
+   "Mills, Rhines, Bellman and Nordhoff",
    "Carleton Monroe Winslow"
   ]
  },
@@ -776,10 +773,7 @@ window.REFERENCE_STYLES = [
   "where": "Stanford University’s Main Quad in Stanford, the Bradbury Building interior structure in Los Angeles, and early civic halls across the state.",
   "architects": [
    "Henry Hobson Richardson",
-   "Shepley",
-   "Rutan and Coolidge / Shepley",
-   "Bulfinch",
-   "Richardson and Abbott",
+   "Shepley, Rutan and Coolidge / Shepley, Bulfinch, Richardson and Abbott",
    "Charles F. McKim",
    "Stanford White",
    "John Wellborn Root",
@@ -898,8 +892,7 @@ window.REFERENCE_STYLES = [
   "where": "The towering skyscrapers of Century City in West Los Angeles, major office campuses across Silicon Valley, and the shimmering Westin Bonaventure Hotel downtown.",
   "architects": [
    "Ludwig Mies van der Rohe",
-   "Skidmore",
-   "Owings & Merrill (SOM)",
+   "Skidmore, Owings & Merrill (SOM)",
    "Eero Saarinen",
    "Florence Knoll"
   ],
@@ -912,8 +905,7 @@ window.REFERENCE_STYLES = [
   "history": "Popularized alongside the Craftsman movement during the early decades of the 20th century, this residential style adapted formal East Coast federal and colonial traditions into smaller, single-family West Coast footprints, frequently found in early streetcar suburbs.",
   "where": "Well-preserved historic residential districts throughout Sacramento, central San Jose, and the older residential core of Fresno.",
   "architects": [
-   "Sears",
-   "Roebuck and Co.",
+   "Sears, Roebuck and Co.",
    "The Aladdin Company",
    "Gordon-Van Tine Company",
    "Sumner Hunt",
@@ -936,10 +928,10 @@ window.REFERENCE_STYLES = [
    "Ludwig Mies van der Rohe",
    "Erich Mendelsohn",
    "Richard Neutra",
-   "Albert",
-   "Kahn",
+   "Albert Kahn",
    "Gottfried Semper"
-  ]
+  ],
+  "generic": true
  },
  {
   "id": "structural-expressionism-late-modern-infrastructure",
@@ -1071,7 +1063,8 @@ window.REFERENCE_STYLES = [
    "Fred Peter",
    "Burns and Burns",
    "Union Pacific and Southern Pacific Engineering Departments"
-  ]
+  ],
+  "generic": true
  },
  {
   "id": "mid-century-minimal-traditional",
@@ -1082,7 +1075,8 @@ window.REFERENCE_STYLES = [
   "architects": [
    "Federal Housing Administration",
    "Cliff May"
-  ]
+  ],
+  "generic": true
  },
  {
   "id": "california-mission-industrial-hybrid",
@@ -1147,7 +1141,7 @@ window.REFERENCE_STYLES = [
  {
   "id": "early-20th-century-commercial-brick",
   "name": "Early 20th Century Commercial Brick",
-  "features": "Segmented brick arches over windows, decorative corbeled brick cornices, massive storefront display windows, heavy post-and-beam interior timbering, functional divisions, durable masonry, and the rise of steel-frame and large-glass. The two-part commercial block (2 to 4 stories) is the most common format for main street districts featuring a clear horizontal split between ground-floor public retail and upper-level private offices, meeting rooms, or apartments. One-part commercial block (1 story) is a single-story, rectangular retail or office storefront that emphasizes horizontal lines, wide street frontage, and flat or shaped parapets. The steel skeleton / commercial style (6 to 20 stories) is enabled by steel-frame engineering and elevators, displaying external grids of structural piers and spandrels with large window bands. The storefront configuration features expansive ground-floor display windows (often partitioned with thin mullions) paired with recessed entries or flush glass layouts. Continuous lines of glass transoms or translucent prismatic glass above storefronts pull daylight into the interior space. A signature window composition commonly features a large fixed central pane flanked be two narrower, operable casement windows, also known as a “Chicago Window.” Flat roofs are concealed by simple shaped, stepped, or patterned masonry parapets, often doing away with heavy, overhanging 19th-century cornices. Exterior walls are clad predominantly in blond brick, red/tapestry brick, limestone, or stucco, featuring sparse decorative tile, terra cotta, or cast stone accents. Detailing ranges from minimal utilitarian brickwork to Revivals (Neoclassical, Romanesque) or early modern ornament (Art Deco geometric panels).",
+  "features": "Segmented brick arches over windows, decorative corbeled brick cornices, massive storefront display windows, heavy post-and-beam interior timbering, functional divisions, durable masonry, and the rise of steel-frame and large-glass. The two-part commercial block (2 to 4 stories) is the most common format for main street districts featuring a clear horizontal split between ground-floor public retail and upper-level private offices, meeting rooms, or apartments. One-part commercial block (1 story) is a single-story, rectangular retail or office storefront that emphasizes horizontal lines, wide street frontage, and flat or shaped parapets. The steel skeleton / commercial style (6 to 20 stories) is enabled by steel-frame engineering and elevators, displaying external grids of structural piers and spandrels with large window bands. The storefront configuration features expansive ground-floor display windows (often partitioned with thin mullions) paired with recessed entries or flush glass layouts. Continuous lines of glass transoms or translucent prismatic glass above storefronts pull daylight into the interior space. A signature window composition commonly features a large fixed central pane flanked be two narrower, operable casement windows, also known as a “Chicago Window.” Flat roofs are concealed by simple shaped, stepped, or patterned masonry parapets, often doing away with heavy, overhanging 19th-century cornices. Exterior walls are clad predominantly in blond brick, red/tapestry brick, limestone, or stucco, featuring sparse decorative tile, terra cotta, or cast stone accents. Detailing is minimal to modest. A building whose dominant character is a named style (Art Deco, Romanesque, Renaissance or Neoclassical Revival, Streamline Moderne and so on) belongs to that style, not to this plain category.",
   "history": "Built immediately following the turn of the century, these sturdy masonry buildings formed the backbone of California's downtown commercial cores before the widespread adoption of reinforced concrete, serving as vital transit-oriented hubs for early streetcar lines.",
   "where": "Historic Old Pasadena, the historic core of downtown Santa Ana, and the historic Gaslamp Quarter in San Diego.",
   "architects": [
@@ -1156,7 +1150,8 @@ window.REFERENCE_STYLES = [
    "H.P. Berlage",
    "Erich Mendelsohn",
    "Louis Kahn"
-  ]
+  ],
+  "generic": true
  },
  {
   "id": "mid-century-post-and-beam-residential",
@@ -1186,8 +1181,7 @@ window.REFERENCE_STYLES = [
   "architects": [
    "Gordon Bunshaft",
    "Ludwig Mies van der Rohe",
-   "Skidmore",
-   "Owings & Merrill (SOM)",
+   "Skidmore, Owings & Merrill (SOM)",
    "Eero Saarinen",
    "Philip Johnson",
    "Minoru Yamasaki"
@@ -1208,8 +1202,7 @@ window.REFERENCE_STYLES = [
    "George Homsey",
    "Marcel Sedletzky",
    "Richard Whittaker",
-   "Wurster",
-   "Bernardi & Emmon (WBE)"
+   "Wurster, Bernardi & Emmon (WBE)"
   ],
   "family": "Bay Tradition / Sea Ranch"
  },
