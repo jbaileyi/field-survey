@@ -32,7 +32,7 @@
   const arr = (x) => (Array.isArray(x) ? x : []);
   const str = (x) => (x == null ? '' : String(x));
   const fmtDate = (t) => new Date(t).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-  const firstSentence = (s) => str(s).split('. ')[0].replace(/\.$/, '');
+  const firstSentence = (s) => { const p = str(s).split('. '); let o = p[0]; for (let i = 1; i < p.length && /(^|\s)[A-Z]$/.test(o); i++) o += '. ' + p[i]; return o.replace(/\.$/, ''); };
   let toastTimer;
   function toast(msg, ms) {
     const t = $('#toast'); t.textContent = msg; t.hidden = false;
@@ -229,7 +229,7 @@
     detailed: 'Cover every visible issue, give substantive seismic, fire and regulatory notes (up to 5 each), up to 6 similar examples and up to 8 field checks.',
   };
   let refTextCache;
-  const refText = () => refTextCache || (refTextCache = REF.map((r) => `[${r.id}]${r.supplement ? ' (app supplement)' : ''} ${r.name} | Features: ${r.features} | Period: ${firstSentence(r.history)} | Architects: ${r.architects.join('; ') || 'n/a'}`).join('\n'));
+  const refText = () => refTextCache || (refTextCache = REF.map((r) => `[${r.id}]${r.supplement ? ' (app supplement)' : ''} ${r.name}${r.family ? ' | Family: ' + r.family : ''} | Features: ${r.features} | Period: ${firstSentence(r.history)} | Architects: ${arr(r.architects).join('; ') || 'n/a'}`).join('\n'));
 
   const RULES = `Ground every statement in what is visible or in a provided landmark record. If something cannot be seen, mark it not_visible or omit it. Never invent details. Calibrate confidence honestly (0-100). User-supplied context is unverified; say when photos contradict it. Respond with a single JSON object only, no markdown, matching the requested shape exactly.`;
   const SYSTEM_A = `You are an expert architectural historian and field surveyor specializing in California buildings and historic-resource recording.
@@ -240,7 +240,10 @@ How to classify:
 3. If a LANDMARK RECORD with confidence of at least 70 is provided, the documented style, architects, dates and influences take priority over generic matching unless the photos clearly contradict it (then say so and lower confidence). Architects from the record use source "landmark_record".
 4. Avoid classifying by one trait. Round arches alone do not mean Mission or Spanish styles: those rely on stucco walls, clay tile roofs, curvilinear parapets and bell gables. Romanesque Revival relies on brick or stone masonry, banded or polychrome courses, corbel tables, blind arcading, and heavy round-arched portals and towers. Check material, roof, ornament and massing together.
 5. reference_checklist tests canonical features of the style you chose (from the matched entry if the fit is strong or partial, otherwise from your own knowledge of that style).
-6. Architect attribution from photos alone is unreliable. Without a landmark record, label candidates "reference_list" or "inferred" and keep certainty "low" unless a distinctive signature is plain. The reference list may contain imperfect attributions; flag doubt.`;
+6. Architect attribution from photos alone is unreliable. Without a landmark record, label candidates "reference_list" or "inferred" and keep certainty "low" unless a distinctive signature is plain. The reference list may contain imperfect attributions; flag doubt.
+7. Some entries share a Family: they are variants of one style family (for example residential versus civic or commercial versions). Choose the variant that fits the building type and era, use its exact name and id, and do not list sibling variants as alternate_styles.
+8. Architects in the reference list are figures associated with the style in general. Many worked outside California or in other periods, so a listed name is not evidence that they designed this building. Offer one only as a low-certainty candidate with source "reference_list", check that the person was active in the estimated era, and prefer an empty list to a weak guess.
+9. Each entry's Period is when the style flourished. If the estimated era falls clearly outside it, the building may be a later revival or reinterpretation: say so, and lower reference_fit unless the features are unmistakable.`;
   const SYSTEM_B = `You are a historic-resource field surveyor and building-conditions observer for California buildings.
 ${RULES}
 Condition notes are visual observations to be verified by qualified professionals; never issue structural safety verdicts or legal determinations. California considerations may cover seismic vulnerability patterns (unreinforced masonry, soft-story, unbraced chimneys, parapets, cripple walls, tower or dome connections), wildfire and climate exposure, and regulatory context such as the California Register of Historical Resources and CEQA historic review, framed as things to check. Use the landmark record, when provided, for significance and designations.`;
@@ -381,7 +384,7 @@ Condition notes are visual observations to be verified by qualified professional
   function normalize(r) {
     const o = r && typeof r === 'object' ? r : {};
     const ps = o.primary_style || {};
-    return {
+    const res = {
       subject: o.subject || {}, photo_quality: { usable: o.photo_quality ? o.photo_quality.usable !== false : true, issues: arr(o.photo_quality && o.photo_quality.issues), suggested_additional_photos: arr(o.photo_quality && o.photo_quality.suggested_additional_photos) },
       style_free_name: str(o.style_free_name),
       primary_style: { name: str(ps.name) || 'Unclassified', reference_id: REF_BY_ID[ps.reference_id] ? ps.reference_id : null, reference_fit: ['strong', 'partial', 'none'].includes(ps.reference_fit) ? ps.reference_fit : (REF_BY_ID[ps.reference_id] ? 'partial' : 'none'), confidence: clamp(ps.confidence, 0, 100), reasoning: str(ps.reasoning) },
@@ -393,6 +396,18 @@ Condition notes are visual observations to be verified by qualified professional
       california_considerations: { seismic: arr(o.california_considerations && o.california_considerations.seismic), fire_and_climate: arr(o.california_considerations && o.california_considerations.fire_and_climate), regulatory: arr(o.california_considerations && o.california_considerations.regulatory) },
       significance: o.significance || {}, similar_examples: arr(o.similar_examples), field_checks: arr(o.field_checks), caveats: arr(o.caveats),
     };
+    // Cross-check: a confident match should be backed by the style's own canonical features.
+    const items = res.reference_checklist.filter((c) => c && ['present', 'partial', 'absent'].includes(c.status));
+    if (items.length >= 4) {
+      const sc = matchScore(items), p = res.primary_style;
+      if (p.reference_fit === 'strong' && sc < 40) {
+        p.reference_fit = 'partial'; p.confidence = Math.min(p.confidence, 60);
+        res.caveats.push(`Only ${sc}% of the reference features were seen, so the match to the reference entry was downgraded to a partial fit.`);
+      } else if (sc < 25 && p.confidence > 65) {
+        p.confidence = 65; res.caveats.push(`Few of this style's typical features were seen (${sc}%), so confidence was capped.`);
+      }
+    }
+    return res;
   }
 
   /* ---------- analyze flow ---------- */
