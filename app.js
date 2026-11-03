@@ -247,6 +247,7 @@ How to classify:
 10. Fill "evidence" first, from the photos only, then name the style from that evidence. Plain building-type categories (commercial block, factory, warehouse, false-front, packing house, minimal tract house) are deliberately not in the reference list, because they describe use and not style. Style-defining ornament and massing always outrank building type or wall material: dentil or modillion cornices, quoins, rusticated bases, pedimented window surrounds and wrought-iron balconies point to a Renaissance or Italianate revival; zigzag or chevron ornament, vertical piers, setbacks and terra-cotta relief point to Art Deco; heavy round arches in rough masonry point to Romanesque. Never describe a decorated building as simply commercial, urban or brick.
 11. If your style_free_name is a recognized style that is missing from the list, keep that name with reference_fit "none" instead of remapping it to the nearest entry. A famous or unusual building (an iron-and-glass atrium, a landmark with its own documented style) should keep its documented style.
 13. Verify the wall material before using it. Reinforced concrete, stucco, stone and brick are different: if the photos show a different material from the one a reference entry names, mark that checklist item absent and lower the fit. Mark a checklist feature present only when you can point to it in a photo.
+14. style_free_name and primary_style.name must be an architectural style or movement, never a use or building type such as commercial, office, retail, industrial or warehouse. Art Deco is often clad in cast stone, terra-cotta or smooth concrete and can be plain: continuous vertical piers running up through recessed spandrel panels, a stepped or setback crown, stylized low relief at the entrance and parapet, and chamfered corners signal it even without zigzags. A rusticated base alone does not make a building Renaissance Revival or commercial. If no style is genuinely expressed, say "No distinct style" and explain.
 12. Each entry's Period is when the style flourished. If the estimated era falls clearly outside it, the building may be a later revival or reinterpretation: say so, and lower reference_fit unless the features are unmistakable.`;
   const SYSTEM_B = `You are a historic-resource field surveyor and building-conditions observer for California buildings.
 ${RULES}
@@ -345,6 +346,10 @@ Condition notes are visual observations to be verified by qualified professional
     ? `LANDMARK RECORD (identified via web search, confidence ${lm.confidence}%; verify against the photos):\n${JSON.stringify({ name: lm.name, location: lm.location, architects: lm.architects, year_built: lm.year_built, documented_style: lm.documented_style, influences: lm.influences, summary: lm.summary, key_facts: lm.key_facts, designations: lm.designations })}`
     : 'LANDMARK RECORD: none. A lookup did not confirm a specific documented building, so classify from visible evidence alone.';
 
+  const STYLE_WORDS = /(deco|moderne|modern|revival|renaissance|romanesque|gothic|classical|beaux|italianate|brutal|mission|spanish|victorian|queen anne|craftsman|chicago|palazzo|baroque|international|streamline|googie|tudor|colonial|eclectic|regency|organic|expression|pueblo|shingle|ranch|bungalow|second empire|stick)/i;
+  const USE_WORDS = /\b(commercial|office|retail|industrial|warehouse|factory|storefront|utilitarian|vernacular|mercantile)\b/i;
+  const isUseLabel = (a) => { const names = [a && a.primary_style && a.primary_style.name, a && a.style_free_name].map(str).filter(Boolean); return names.length > 0 && names.some((x) => USE_WORDS.test(x) && !STYLE_WORDS.test(x)); };
+  const retryNote = (a) => `CORRECTION: your previous answer named "${str(a.primary_style && a.primary_style.name) || str(a.style_free_name)}", which is a building type or use, not an architectural style. Look at the evidence again and name the actual style. For a multi-story urban building of the 1900s to 1940s, weigh Art Deco, Streamline or PWA Moderne, Beaux-Arts, Neoclassical, Italian Renaissance Revival, Gothic (including Collegiate or commercial Gothic), Chicago School and Late Moderne, judging by ornament, piers and spandrels, the crown, the entrance treatment and the true wall material (concrete, cast stone, terra-cotta, brick or stone). Only if no style is expressed, use the name "No distinct style". Do not return a building type as the style.`;
   async function runPipeline(rec, signal, progress, cap) {
     cap = cap || MAX_PHOTOS;
     let landmark = null, sources = [], notice = '';
@@ -364,20 +369,26 @@ Condition notes are visual observations to be verified by qualified professional
     progress(rec.depth === 'quick' ? 'Analyzing the photos' : 'Analyzing style and condition');
     const imgs = await imageParts(rec.images, cap), lmText = landmarkBlock(landmark), ctx = siteContext(rec);
     const n = Math.min(rec.images.length, cap);
-    const introA = (shape, depth) => ({ text: `Analyze the structure shown in the ${n} attached photo(s).\n${ctx}\n\n${lmText}\n\n${depth}\n\nREFERENCE LIST (id, name, features, period, architects). Not exhaustive:\n${refText()}\n\nReturn JSON in exactly this shape (replace placeholder values; arrays may be empty):\n${shape}` });
+    const introA = (shape, depth, extra) => ({ text: `Analyze the structure shown in the ${n} attached photo(s).\n${ctx}\n\n${lmText}\n\n${depth}\n\nREFERENCE LIST (id, name, features, period, architects). Not exhaustive:\n${refText()}\n\n${extra ? extra + '\n\n' : ''}Return JSON in exactly this shape (replace placeholder values; arrays may be empty):\n${shape}` });
+    const redoA = async (shape, depth, first, system, extraLabel) => {
+      if (!isUseLabel(first)) return { A: first, c: null };
+      progress('Re-checking the style');
+      try { const c2 = readCandidate(await gen(rec.model, [introA(shape, depth, retryNote(first)), ...imgs], { system, maxTokens: 8192, signal })); const j = c2.text ? parseJson(c2.text) : null; if (j && !isUseLabel(j)) return { A: j, c: c2 }; } catch (e) { if (e.cancelled) throw e; }
+      return { A: first, c: null };
+    };
     const introB = (depth) => ({ text: `Assess the condition and context of the structure shown in the ${n} attached photo(s).\n${ctx}\n\n${lmText}\n\n${depth}\n\nReturn JSON in exactly this shape (replace placeholder values; arrays may be empty):\n${SHAPE_B}` });
     let A, B = {}, truncated = false;
     if (rec.depth === 'quick') {
       const shape = `Two parts merged into ONE object. Part 1 keys:\n${SHAPE_A}\nPart 2 keys (same top-level object):\n${SHAPE_B}`;
       const c = readCandidate(await gen(rec.model, [introA(shape, DEPTH_A.quick + ' ' + DEPTH_B.quick), ...imgs], { system: SYSTEM_A, maxTokens: 8192, signal }));
-      A = needJson(c, 'the analysis'); B = A; truncated = c.finish === 'MAX_TOKENS';
+      A = needJson(c, 'the analysis'); const rd = await redoA(shape, DEPTH_A.quick + ' ' + DEPTH_B.quick, A, SYSTEM_A); A = rd.A; if (rd.c) c.finish = rd.c.finish; B = A; truncated = c.finish === 'MAX_TOKENS';
     } else {
       const [ra, rb] = await Promise.allSettled([
         gen(rec.model, [introA(SHAPE_A, DEPTH_A[rec.depth] || DEPTH_A.standard), ...imgs], { system: SYSTEM_A, maxTokens: 8192, signal }),
         gen(rec.model, [introB(DEPTH_B[rec.depth] || DEPTH_B.standard), ...imgs], { system: SYSTEM_B, maxTokens: 6144, signal }),
       ]);
       if (ra.status === 'rejected') throw ra.reason;
-      const ca = readCandidate(ra.value); A = needJson(ca, 'the style analysis'); truncated = ca.finish === 'MAX_TOKENS';
+      const ca = readCandidate(ra.value); A = needJson(ca, 'the style analysis'); const rd = await redoA(SHAPE_A, DEPTH_A[rec.depth] || DEPTH_A.standard, A, SYSTEM_A); A = rd.A; if (rd.c) ca.finish = rd.c.finish; truncated = ca.finish === 'MAX_TOKENS';
       if (rb.status === 'fulfilled') { const cb = readCandidate(rb.value); const j = cb.text ? parseJson(cb.text) : null; if (j) { B = j; truncated = truncated || cb.finish === 'MAX_TOKENS'; } else notice += ' Condition and California notes came back unreadable. Tap Re-analyze to retry.'; }
       else { if (rb.reason && rb.reason.cancelled) throw rb.reason; notice += ' Condition and California notes could not be generated (' + String(rb.reason.message).slice(0, 100) + '). Tap Re-analyze to retry.'; }
     }
